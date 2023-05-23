@@ -13,12 +13,17 @@ jobs:
     runs-on: ['self-hosted', 'ondemand', 'linux', 'type=t3.nano']
     name: Build Packet Instance
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@128a63446a954579617e875aaab7d2978154e969 # v2.4.0
+        with:
+          egress-policy: audit
+
       - name: Authentication
         id: vault-auth
         run: vault-auth
       - name: Secrets
         id: secrets
-        uses: hashicorp/vault-action@v2
+        uses: hashicorp/vault-action@130d1f5f4fe645bb6c83e4225c04d64cfb62de6e # v2.5.0
         with:
           url: ${{ steps.vault-auth.outputs.addr }}
           caCertificate: ${{ steps.vault-auth.outputs.ca_certificate }}
@@ -29,7 +34,7 @@ jobs:
             kv/data/teams/vagrant/packet project_id | packet_project_id;
             kv/data/teams/vagrant/packet ssh_key_content | packet_ssh_key_content;
       - name: Code Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
       - name: Create packet instance
         run: ./.ci/spec/create-packet.sh
         working-directory: ${{github.workspace}}
@@ -49,8 +54,13 @@ jobs:
         guest_os: ['hashicorp-vagrant/ubuntu-16.04']
         providers: ['virtualbox', 'docker']
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@128a63446a954579617e875aaab7d2978154e969 # v2.4.0
+        with:
+          egress-policy: audit
+
       - name: Code Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
         with:
           submodules: 'recursive'
       - name: Create hosts for tests (provider ${{ matrix.providers }})
@@ -78,6 +88,11 @@ jobs:
         docker_images: ['nginx']
         providers: ['virtualbox', 'docker']
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@128a63446a954579617e875aaab7d2978154e969 # v2.4.0
+        with:
+          egress-policy: audit
+
       - name: Run Tests with host ${{ matrix.host_os }} using provider ${{ matrix.providers }}
         run: ./.ci/spec/run-test.sh
         working-directory: ${{github.workspace}}
@@ -104,7 +119,7 @@ jobs:
           VAGRANT_DOCKER_IMAGES: ${{matrix.docker_images}}
       - name: Upload log
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
         with:
           name: vagrant-spec-${{matrix.providers}}.log
           path: ${{ github.workspace }}/vagrant-spec.log
@@ -114,6 +129,11 @@ jobs:
     name: Notify on Success
     needs: spec-tests
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@128a63446a954579617e875aaab7d2978154e969 # v2.4.0
+        with:
+          egress-policy: audit
+
       - name: Notify on Success
         run: ./.ci/spec/notify-success.sh
         env:
@@ -125,6 +145,11 @@ jobs:
     name: Cleanup Post Vagrant-Spec Tests
     needs: [spec-tests, notify-on-success]
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@128a63446a954579617e875aaab7d2978154e969 # v2.4.0
+        with:
+          egress-policy: audit
+
       - name: Clean Packet
         run: ./.ci/spec/clean-packet.sh
         env:
